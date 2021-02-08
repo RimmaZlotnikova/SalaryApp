@@ -5,9 +5,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data.SQLite;
 
 namespace SalaryApp
 {
+
     class Worker
     {
         // АБСТРАКТНЫЙ ??? класс для обработки 1 сотрудника:
@@ -21,10 +23,12 @@ namespace SalaryApp
         //  
 
         public int id { get; set; }
-        private string name;
-        private string recruit_date, remove_date;
-        private int group_id;
-        private decimal base_salary;
+        protected string name;
+        protected string recruit_date, remove_date;
+        protected int group_id;
+        protected decimal base_salary;
+        protected ApplicationContext db;
+        protected Group_attribs info;
 
         public string Name
         {
@@ -46,11 +50,7 @@ namespace SalaryApp
         public int Group_id
         {
             get { return group_id; }
-            set 
-            { 
-                if (value == 0) { group_id = 1; }
-                else { group_id = 2; }                
-            }
+            set { group_id = value; }
         }
         
         public decimal Base_salary
@@ -59,10 +59,9 @@ namespace SalaryApp
             set { base_salary = value; }
         }
 
+        public Worker() { }
 
-        public Worker() {}
-        
-        public Worker(string name , string recruit_date, string remove_date, int group_id, decimal base_salary )
+        public Worker(string name, string recruit_date, string remove_date, int group_id, decimal base_salary)
         {
             this.name = name;
             this.recruit_date = recruit_date;
@@ -70,7 +69,147 @@ namespace SalaryApp
             this.group_id = group_id;
             this.base_salary = base_salary;
         }
+
+        public Worker(int id, ApplicationContext db)
+        {
+            Worker worker = db.Workers.Find(id);
+
+            this.id = worker.id;
+            this.name = worker.name;
+            this.recruit_date = worker.recruit_date;
+            this.remove_date = worker.remove_date;
+            this.group_id = worker.group_id;
+            this.base_salary = worker.base_salary;
+        }
+
+        public Worker(Worker worker, Group_attribs info)
+        {
+            this.id = worker.id;
+            this.name = worker.name;
+            this.recruit_date = worker.recruit_date;
+            this.remove_date = worker.remove_date;
+            this.group_id = worker.group_id;
+            this.base_salary = worker.base_salary;
+
+            this.info = info;
+        }
+
+        public static Worker GetRightObgById(int id, ApplicationContext db)
+        {
+            Worker worker = new Worker(id, db);  
+            Group_attribs info = new Group_attribs(worker.group_id);
+
+            if (info.InfAvail() == false)
+            {
+                return new WorkerWithoutInf(worker, info);
+            }
+            else
+            {
+                return new WorkerWithInf(worker, info);
+            }
+        }
+
+        public bool CheckIfInferAvail( )
+        {
+            if (info == null)
+            {
+                this.info = new Group_attribs(this.group_id);
+            }
+            return info.InfAvail();
+        }
+
+        public virtual decimal GetSalary(DateTime datetime, ApplicationContext db) 
+        {
+            // расчёт зп без учёта подчинённых - тк не положены по группе 
+            decimal yearsRatio = GetYearsRatio(datetime); // [ year_ratio; max_ratio ]
+            return (this.base_salary + this.base_salary / yearsRatio);
+        }
+
+        public decimal GetYearsRatio(DateTime datetime)
+        {
+            // в зависимости от стажа на данной должности рассчитаем yearsRatio:
+            // 1 получить из info year_ratio; max_ratio
+            // 2 получить количество отработанных полных лет НА ДАТУ!
+            if ( info == null )
+            {
+                this.info = new Group_attribs(this.Group_id);
+            }
+            var year_base = info.Year_ratio;
+            var max_ratio = info.Max_ratio;
+            var years = GetWorkerYears(datetime);
+            return Utils.CalcFromBaseToMax(years, year_base, max_ratio);
+        }
+        public int GetWorkerYears( DateTime datetime )
+        {
+            //  от переданной даты!!
+            // посчитаем полное количество отработанных лет 
+            DateTime start = Convert.ToDateTime(this.recruit_date);
+            int result = datetime.Year - start.Year;
+            if (start > datetime.AddYears(-result)) result--;
+            return result;
+        }
+
+    }
+
+    class WorkerWithoutInf : Worker
+    {
+        public WorkerWithoutInf() : base() { }
+        public WorkerWithoutInf(string name, string recruit_date, string remove_date, int group_id, decimal base_salary)
+       : base(name, recruit_date, remove_date, group_id, base_salary) { }
+        public WorkerWithoutInf(Worker worker, Group_attribs info) : base(worker, info) { }
+        public WorkerWithoutInf(int id, ApplicationContext db) : base(id, db) { }
         
+    }
+
+    class WorkerWithInf : Worker
+    {
+        public WorkerWithInf() : base() { }
+        public WorkerWithInf(string name, string recruit_date, string remove_date, int group_id, decimal base_salary)
+       : base(name, recruit_date, remove_date, group_id, base_salary) { }
+        public WorkerWithInf( Worker worker, Group_attribs info) : base(worker, info) { }
+        public WorkerWithInf(int id, ApplicationContext db) : base(id, db) { }
+
+        public override decimal GetSalary(DateTime datetime, ApplicationContext db)
+        {
+            // для данного класса зп зависит от подчинённых ещё
+            // 1 рассчитаем коэф за стаж на должности 
+            // 2 рассчитаем надбавку за каждого подчинённого первого уровня
+            // 3 Формула: базовая_ставка * коэф_за_стаж  + сумма_зп_подчинённых * коэф_за_подчин 
+            decimal yearsRatio = GetYearsRatio(datetime); // [ year_ratio; max_ratio ]
+            decimal inferBonus = GetInferBonus(datetime, db);
+            return (this.base_salary + this.base_salary * yearsRatio) + inferBonus;
+        }
+
+        public decimal GetInferBonus(DateTime datetime, ApplicationContext db)
+        {
+            // 2 рассчитаем надбавку за каждого подчинённого первого уровня:
+            //      получить лист подчинённых, для каждого получить размер зп (у каждого могут быть свои подчинённые..)    
+            //      просуммировать все зп подчинённых 
+            //      домножить сумму на коэф inf_ratio
+            List<Inferrior> infers = GetInferList(datetime, db);
+
+            if (infers.Count != 0 )
+            {
+                decimal sumInferSalary = 0;
+                foreach (Inferrior inf in infers)
+                {
+                    Worker worker = Worker.GetRightObgById(inf.Inferrior_id, db);
+                    sumInferSalary += worker.GetSalary(datetime, db);
+                }
+                return sumInferSalary * this.info.Inf_ratio;
+            }
+            else
+            {
+                return 0;
+            }
+        }
+
+        public List<Inferrior> GetInferList(DateTime datetime, ApplicationContext db) // TODO с датой
+        {
+            return db.Inferriors
+                .SqlQuery("Select * from Inferriors where head_id == @head_id",
+                new SQLiteParameter("@head_id", this.id)).ToList<Inferrior>();
+        }
     }
 
     class Group_attribs
@@ -80,6 +219,7 @@ namespace SalaryApp
         private decimal inf_ratio;
         private decimal year_ratio, max_ratio;
         private int inf_avail;
+        private ApplicationContext dbInfo;
 
         public string Text
         {
@@ -109,7 +249,6 @@ namespace SalaryApp
 
         public Group_attribs() { }
 
-
         public Group_attribs(string text, int inf_avail, decimal inf_ratio, decimal year_ratio, decimal max_ratio)
         {
             this.text = text;
@@ -118,17 +257,28 @@ namespace SalaryApp
             this.inf_ratio = inf_ratio;
             this.inf_avail = inf_avail;
         }
+        public Group_attribs(int group_id) // мб стоит передать объект  ApplicationContext - ?
+        {
+            dbInfo = new ApplicationContext();    
+            Group_attribs info = dbInfo.Group_attribs.Find(group_id);
+            this.text = info.text;
+            this.year_ratio = info.year_ratio;
+            this.max_ratio = info.max_ratio;
+            this.inf_ratio = info.inf_ratio;
+            this.inf_avail = info.inf_avail;
+        }
+
+        public bool InfAvail()
+        {
+            return (this.Inf_avail == 1);
+        }
 
     }
 
     class Inferrior
     {
-        //[Key]
-        //[Column(Order=1)]
         private int head_id { get; set; }
 
-        //[Key]
-        //[Column(Order = 2)]
         private int inferrior_id { get; set; }
         private string add_date, remove_date;
 

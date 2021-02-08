@@ -38,6 +38,7 @@ namespace SalaryApp
             this.lblWorkers = new System.Windows.Forms.Label();
             this.lblInf = new System.Windows.Forms.Label();
             this.btnAddInf = new System.Windows.Forms.Button();
+            this.lblSalaryResult = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgvWorkers)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvInf)).BeginInit();
             this.SuspendLayout();
@@ -84,10 +85,11 @@ namespace SalaryApp
             this.btnSalaryCalc.TabIndex = 11;
             this.btnSalaryCalc.Text = "Расчёт з/п сотрудника";
             this.btnSalaryCalc.UseVisualStyleBackColor = true;
+            this.btnSalaryCalc.Click += new System.EventHandler(this.btnSalaryCalc_Click);
             // 
             // btnInfo
             // 
-            this.btnInfo.Location = new System.Drawing.Point(727, 236);
+            this.btnInfo.Location = new System.Drawing.Point(727, 270);
             this.btnInfo.Name = "btnInfo";
             this.btnInfo.Size = new System.Drawing.Size(175, 37);
             this.btnInfo.TabIndex = 12;
@@ -125,7 +127,7 @@ namespace SalaryApp
             // 
             // btnAddInf
             // 
-            this.btnAddInf.Location = new System.Drawing.Point(727, 297);
+            this.btnAddInf.Location = new System.Drawing.Point(727, 329);
             this.btnAddInf.Name = "btnAddInf";
             this.btnAddInf.Size = new System.Drawing.Size(175, 39);
             this.btnAddInf.TabIndex = 17;
@@ -133,11 +135,21 @@ namespace SalaryApp
             this.btnAddInf.UseVisualStyleBackColor = true;
             this.btnAddInf.Click += new System.EventHandler(this.btnAddInf_Click);
             // 
+            // lblSalaryResult
+            // 
+            this.lblSalaryResult.AutoSize = true;
+            this.lblSalaryResult.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
+            this.lblSalaryResult.Location = new System.Drawing.Point(707, 238);
+            this.lblSalaryResult.Name = "lblSalaryResult";
+            this.lblSalaryResult.Size = new System.Drawing.Size(0, 17);
+            this.lblSalaryResult.TabIndex = 18;
+            // 
             // fHR
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(943, 591);
+            this.Controls.Add(this.lblSalaryResult);
             this.Controls.Add(this.btnAddInf);
             this.Controls.Add(this.lblInf);
             this.Controls.Add(this.lblWorkers);
@@ -167,6 +179,7 @@ namespace SalaryApp
         private System.Windows.Forms.Label lblWorkers;
         private System.Windows.Forms.Label lblInf;
         private System.Windows.Forms.Button btnAddInf;
+        private System.Windows.Forms.Label lblSalaryResult;
     }
 }
 

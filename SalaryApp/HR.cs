@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Data.Entity;
 using System.ComponentModel;
 using System.Data.SQLite;
+using System.Windows.Forms;
 //using System.Data.SqlClient;
 
 namespace SalaryApp
@@ -26,12 +27,29 @@ namespace SalaryApp
         // производить расчет зп для всех сотрудников
         // добавлять группы 
         // фиксировать подчинённых - с проверкой, можно ли данному соруднику иметь подчинённых (контроль "закругления"?)
-        
+
         ApplicationContext db;
 
-        public HR() 
+        public HR()
         {
             db = new ApplicationContext();
+        }
+
+        public decimal GetSalary( int id )
+        {
+            Worker worker = GetObject(id);
+            return worker.GetSalary(DateTime.UtcNow, db);
+        }
+
+        public Worker GetObject(int id)
+        {
+            return Worker.GetRightObgById(id, db);
+        }
+
+        public Group_attribs GetByGroupId(int group_id)
+        {
+            Group_attribs info = db.Group_attribs.Find(group_id);
+            return info;
         }
 
         public BindingList<Worker> getActWorkersList()
@@ -48,16 +66,24 @@ namespace SalaryApp
         public void AddWorkerToDB(string name, string recruit_date, string remove_date, int group_id, decimal base_salary)
         {
             // создадим новую запись в таблице Workers
-            Worker worker = new Worker(name, recruit_date, remove_date, group_id, base_salary); 
+            Worker worker = new WorkerWithInf(name, recruit_date, remove_date, group_id, base_salary); 
             db.Workers.Add(worker);
             db.SaveChanges();
         }
 
         public void AddInferToDB( int head_id, int inferrior_id, string add_date, string remove_date )
         {
-            Inferrior inferrior = new Inferrior(head_id, inferrior_id, add_date, remove_date );
-            db.Inferriors.Add(inferrior);
-            db.SaveChanges();
+            Worker worker = new Worker(head_id, db);
+            if (worker.CheckIfInferAvail() == true)
+            {
+                Inferrior inferrior = new Inferrior(head_id, inferrior_id, add_date, remove_date);
+                db.Inferriors.Add(inferrior);
+                db.SaveChanges();
+            }
+            else
+            {
+                MessageBox.Show("Для данного вида сотрудников невозможно добавление подчинённых", "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+            }
         }
 
         public void ChangeWorker( int id, string remove_date )
@@ -79,6 +105,8 @@ namespace SalaryApp
         public List<Worker> getInferList(int head_id)
         {
             // вернём список объектов для отображения в гриде - для Источника данных
+
+            // TODO завернуть в класс WorkerWithInfer .....
             var inferriors = db.Inferriors
                 .SqlQuery("Select * from Inferriors where head_id == @head_id",
                 new SQLiteParameter("@head_id", head_id)).ToList<Inferrior>();

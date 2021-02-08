@@ -24,7 +24,6 @@ namespace SalaryApp
             InitializeComponent();
             hr = new HR();
             dgvWorkers.DataSource = hr.getActWorkersList();
-            //dgvInf.DataSource = hr.getInferList();
         }
 
         private void buttonAdd_Click(object sender, EventArgs e)
@@ -64,18 +63,25 @@ namespace SalaryApp
 
         private void btnDelete_Click(object sender, EventArgs e)
         {
-            WorkerF workerF = new WorkerF();
+            if (dgvWorkers.CurrentRow != null)
+            {
+                WorkerF workerF = new WorkerF();
+                workerF.label1.Text = "Дата увольнения:";
+                workerF.textBox1.Text = Convert.ToString(dgvWorkers.CurrentRow.Cells[3].Value);
+                Utils.InactiveElem(workerF);
 
-            workerF.label1.Text = "Дата увольнения:";
-            workerF.textBox1.Text = Convert.ToString(dgvWorkers.CurrentRow.Cells[3].Value);
-            Utils.InactiveElem(workerF);
+                DialogResult result = workerF.ShowDialog(this);
+                if (result == DialogResult.Cancel)
+                    return;
+                hr.ChangeWorker(Convert.ToInt32(dgvWorkers.CurrentRow.Cells[0].Value), workerF.textBox1.Text);
 
-            DialogResult result = workerF.ShowDialog(this);
-            if (result == DialogResult.Cancel)
-                return;
-            hr.ChangeWorker(Convert.ToInt32(dgvWorkers.CurrentRow.Cells[0].Value), workerF.textBox1.Text);
-
-            dgvWorkers.Rows.RemoveAt(dgvWorkers.SelectedRows[0].Index);
+                dgvWorkers.Rows.RemoveAt(dgvWorkers.SelectedRows[0].Index);
+            }
+            else 
+            {
+                MessageBox.Show("Не выбран сотрудник",
+                    "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+            }
 
         }
 
@@ -91,9 +97,23 @@ namespace SalaryApp
             if (dgvWorkers.CurrentRow != null)
             {
                 dgvInf.DataSource = hr.getInferList(Convert.ToInt32(dgvWorkers.CurrentRow.Cells[0].Value));
+                lblSalaryResult.Text=  "";
             }
         }
 
-
+        private void btnSalaryCalc_Click(object sender, EventArgs e)
+        {
+            if (dgvWorkers.CurrentRow != null)
+            {
+                string msg = " З/П текущего сотрудника: " 
+                    + hr.GetSalary(Convert.ToInt32(dgvWorkers.CurrentRow.Cells[0].Value));
+                lblSalaryResult.Text = msg;
+            }
+            else
+            {
+                MessageBox.Show("Не выбран сотрудник для расчёта его з/п", 
+                    "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+            }
+        }
     }
 }
