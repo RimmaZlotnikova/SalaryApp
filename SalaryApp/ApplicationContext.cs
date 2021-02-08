@@ -4,8 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data.Entity;
-//using System.Data.SQLite;
-//using System.Data.SQLite;
 
 
 namespace SalaryApp
@@ -18,7 +16,5 @@ namespace SalaryApp
         public DbSet<Inferrior> Inferriors { get; set; }
 
         public ApplicationContext() : base("DefaultConnection") { }
-
-
     }
 }

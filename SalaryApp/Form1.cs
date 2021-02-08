@@ -12,11 +12,8 @@ using System.Data.Entity;
 namespace SalaryApp
 {
 
-   // HR hr;
-
     public partial class fHR : Form
     {
-        // ApplicationContext db;
         HR hr;
 
         public fHR()
@@ -48,7 +45,7 @@ namespace SalaryApp
         {
             if (dgvWorkers.CurrentRow != null && dgvWorkers.SelectedRows.Count == 2)
             {
-                //var i = dgvWorkers.CurrentRow.Index; // <-- строка, ктр в фокусе - думаю, будет подчинённый
+                //  строка, ктр в фокусе - думаю, будет подчинённый
                 DateTime d = DateTime.UtcNow;
                 string curDateTime = d.ToString("yyyy.MM.dd hh:mm:ss");
 
@@ -82,7 +79,6 @@ namespace SalaryApp
                 MessageBox.Show("Не выбран сотрудник",
                     "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
             }
-
         }
 
         private void btnInfo_Click(object sender, EventArgs e)
@@ -112,8 +108,25 @@ namespace SalaryApp
             else
             {
                 MessageBox.Show("Не выбран сотрудник для расчёта его з/п", 
-                    "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
+                    "Внимание", MessageBoxButtons.OK, MessageBoxIcon.Asterisk); 
+            }
+
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            List<Worker> allWorkers = hr.GetLocalWorkers(); //hr.getActWorkersList().ToList<Worker>();
+            if (allWorkers.Count != 0)
+            {
+                decimal sumSalary = 0;
+                foreach (Worker worker in allWorkers)
+                {
+                    sumSalary += hr.GetSalary(worker.id);
+                }
+                MessageBox.Show(Convert.ToString(sumSalary),
+                   "Суммарная з/п", MessageBoxButtons.OK, MessageBoxIcon.Asterisk);
             }
         }
+
     }
 }

@@ -29,6 +29,7 @@ namespace SalaryApp
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             this.textBox4 = new System.Windows.Forms.TextBox();
             this.textBox3 = new System.Windows.Forms.TextBox();
             this.textBox2 = new System.Windows.Forms.TextBox();
@@ -39,6 +40,8 @@ namespace SalaryApp
             this.label1 = new System.Windows.Forms.Label();
             this.btnOk = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
+            this.groupattribsBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            ((System.ComponentModel.ISupportInitialize)(this.groupattribsBindingSource)).BeginInit();
             this.SuspendLayout();
             // 
             // textBox4
@@ -127,6 +130,10 @@ namespace SalaryApp
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
             // 
+            // groupattribsBindingSource
+            // 
+            this.groupattribsBindingSource.DataSource = typeof(SalaryApp.Group_attribs);
+            // 
             // WorkerF
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -144,6 +151,7 @@ namespace SalaryApp
             this.Controls.Add(this.label1);
             this.Name = "WorkerF";
             this.Text = "Добавление/изменение сотрудника";
+            ((System.ComponentModel.ISupportInitialize)(this.groupattribsBindingSource)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -160,5 +168,6 @@ namespace SalaryApp
         protected internal System.Windows.Forms.Label label4;
         protected internal System.Windows.Forms.Label label3;
         protected internal System.Windows.Forms.Label label2;
+        private System.Windows.Forms.BindingSource groupattribsBindingSource;
     }
 }

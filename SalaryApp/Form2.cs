@@ -12,6 +12,7 @@ namespace SalaryApp
 {
     public partial class WorkerF : Form
     {
+        // TODO Здесь необходимо добавить Combobox, чтобы пользователь выбирал Группу, а не вводил её
         public WorkerF()
         {
             InitializeComponent();
